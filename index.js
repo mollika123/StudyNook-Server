@@ -23,8 +23,9 @@ const client = new MongoClient(uri, {
   }
 });
 const JWKS = createRemoteJWKSet(
-  new URL("http://localhost:3000/api/auth/jwks")
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
 )
+
 const verifyToken =async (req, res, next) => {
   const authHeader = req?.headers.authorization;
   if (!authHeader) {
@@ -51,11 +52,11 @@ const verifyToken =async (req, res, next) => {
 async function run() {
   try {
 
-    await client.connect();
+    // await client.connect();
    const db = client.db("studynook");
     const roomsCollection = db.collection("rooms");
     const bookingCollection=db.collection("bookings")
-
+const usersCollection = db.collection("users");
 
     // app.get('/rooms', async (req, res) => {
     //   const result = await roomsCollection.find().toArray();
@@ -123,21 +124,50 @@ async function run() {
   }
 });
     // middleware
-    app.get('/rooms/:id',verifyToken,  async (req, res) => {
-      const { id } = req.params;
-      const result = await roomsCollection.findOne({
-        _id: new ObjectId(id)
-      });
-      res.json(result)
-    })
-    app.get('/latest-rooms', async (req, res) => {
-      const latestRooms=await roomsCollection.find({})
-      .sort({ _id: -1 }) 
-      .limit(6)          
+    // app.get('/rooms/:id',verifyToken,  async (req, res) => {
+    //   const { id } = req.params;
+    //   const result = await roomsCollection.findOne({
+    //     _id: new ObjectId(id)
+    //   });
+    //   res.json(result)
+    // })
+     app.get("/rooms/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await roomsCollection.findOne({
+          _id: new ObjectId(id),
+        });
+
+        if (!result) {
+          return res.json({
+            success: false,
+            message: "Room not found",
+          });
+        }
+
+        res.json(result);
+      } catch (error) {
+        res.json({
+          success: false,
+          message: "Failed to fetch room",
+          error,
+        });
+      }
+    });
+   app.get("/latest-rooms", async (req, res) => {
+  try {
+    const latestRooms = await roomsCollection
+      .find({})
+      .sort({ _id: -1 })
+      .limit(6)
       .toArray();
-      
+
     res.json(latestRooms);
-    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
        // My Listings - Single user rooms, without booking details
 
@@ -147,23 +177,7 @@ async function run() {
       res.json(result)
       
     })
-    //   try {
-    //     const userId = req.params.userId;
-
-    //     const result = await roomsCollection
-    //       .find({ creatorId: userId })
-    //       .sort({ createdAt: -1 })
-    //       .toArray();
-
-    //     res.json(result);
-    //   } catch (error) {
-    //     res.json({
-    //       success: false,
-    //       message: "Failed to fetch listings",
-    //       error,
-    //     });
-    //   }
-    // });
+    
 
     app.get('/booking/:userId', async (req, res) => {
       const { userId } = req.params
@@ -171,126 +185,152 @@ async function run() {
       res.json(result)
       
     })
-  app.delete("/booking/:bookingId", verifyToken,async (req, res) => {
-  try {
-    const { bookingId } = req.params;
+  // app.delete("/booking/:bookingId", verifyToken,async (req, res) => {
+  // try {
+  //   const { bookingId } = req.params;
 
-    // 1. find booking first
-    const booking = await bookingCollection.findOne({
-      _id: new ObjectId(bookingId),
-    });
+  //   // 1. find booking first
+  //   const booking = await bookingCollection.findOne({
+  //     _id: new ObjectId(bookingId),
+  //   });
 
-    if (!booking) {
-      return res.status(404).json({
-        message: "Booking not found",
-      });
-    }
+  //   if (!booking) {
+  //     return res.status(404).json({
+  //       message: "Booking not found",
+  //     });
+  //   }
 
-    // 2. delete booking
-    const result = await bookingCollection.deleteOne({
-      _id: new ObjectId(bookingId),
-    });
+  //   // 2. delete booking
+  //   const result = await bookingCollection.deleteOne({
+  //     _id: new ObjectId(bookingId),
+  //   });
 
-    // 3. remove from user bookings array ($pull requirement)
-    await usersCollection.updateOne(
-      { userId: booking.userId },
-      {
-        $pull: {
-          bookings: bookingId,
-        },
-      }
-    );
+  //   // 3. remove from user bookings array ($pull requirement)
+  //   await usersCollection.updateOne(
+  //     { userId: booking.userId },
+  //     {
+  //       $pull: {
+  //         bookings: bookingId,
+  //       },
+  //     }
+  //   );
 
-    res.json({
-      success: true,
-      message: "Booking deleted successfully",
-      result,
-    });
-  } catch (error) {
-    console.log(error);
+  //   res.json({
+  //     success: true,
+  //     message: "Booking deleted successfully",
+  //     result,
+  //   });
+  // } catch (error) {
+  //   console.log(error);
 
-    res.status(500).json({
-      message: "Delete failed",
-    });
-  }
-});
+  //   res.status(500).json({
+  //     message: "Delete failed",
+  //   });
+  // }
+  //   });
+    
+
+
+
+
+
+
+
+
 //     app.post('/booking', async (req, res) => {
 //       const bookingData = req.body
 //       const result = await bookingCollection.insertOne(bookingData);
 //       res.json(result)
     // })
     
-    app.post("/booking",verifyToken, async (req, res) => {
-  try {
-    const bookingData = req.body;
+  //   app.post("/booking",verifyToken, async (req, res) => {
+  // try {
+  //   const bookingData = req.body;
 
-    const {
-      roomId,
-      date,
-      startTime,
-      endTime,
-    } = bookingData;
+  //   const {
+  //     roomId,
+  //     date,
+  //     startTime,
+  //     endTime,
+  //   } = bookingData;
 
-    // 🔥 Convert to Date objects
-    const newStart = new Date(`${date}T${startTime}`);
-    const newEnd = new Date(`${date}T${endTime}`);
+  //   // 🔥 Convert to Date objects
+  //   const newStart = new Date(`${date}T${startTime}`);
+  //   const newEnd = new Date(`${date}T${endTime}`);
 
-    // ✅ Check overlapping bookings
-    const conflict =
-      await bookingCollection.findOne({
-        roomId,
-        date,
+  //   // ✅ Check overlapping bookings
+  //   const conflict =
+  //     await bookingCollection.findOne({
+  //       roomId,
+  //       date,
 
-        startDateTime: {
-          $lt: newEnd,
-        },
+  //       startDateTime: {
+  //         $lt: newEnd,
+  //       },
 
-        endDateTime: {
-          $gt: newStart,
-        },
+  //       endDateTime: {
+  //         $gt: newStart,
+  //       },
+  //     });
+
+  //   // ❌ Conflict found
+  //   if (conflict) {
+  //     return res.status(409).json({
+  //       conflict: true,
+  //       message:
+  //         "This room is already booked for this time slot",
+  //     });
+  //   }
+
+  //   // ✅ Final booking data
+  //   const finalBooking = {
+  //     ...bookingData,
+
+  //     startDateTime: newStart,
+  //     endDateTime: newEnd,
+
+  //     createdAt: new Date(),
+  //   };
+
+  //   // ✅ Save booking
+  //   const result =
+  //     await bookingCollection.insertOne(
+  //       finalBooking
+  //     );
+
+  //   res.json({
+  //     success: true,
+  //     result,
+  //   });
+  // } catch (error) {
+  //   console.log(error);
+
+  //   res.status(500).json({
+  //     message: "Booking failed",
+  //   });
+  // }
+  //   });
+    
+       app.delete("/booking/:bookingId", verifyToken, async (req, res) => {
+         const { bookingId } = req.params;
+         console.log(bookingId);
+      const result = await bookingCollection.deleteOne({
+        _id: new ObjectId(bookingId),
       });
 
-    // ❌ Conflict found
-    if (conflict) {
-      return res.status(409).json({
-        conflict: true,
-        message:
-          "This room is already booked for this time slot",
-      });
-    }
-
-    // ✅ Final booking data
-    const finalBooking = {
-      ...bookingData,
-
-      startDateTime: newStart,
-      endDateTime: newEnd,
-
-      createdAt: new Date(),
-    };
-
-    // ✅ Save booking
-    const result =
-      await bookingCollection.insertOne(
-        finalBooking
-      );
-
-    res.json({
-      success: true,
-      result,
+      res.json(result);
     });
-  } catch (error) {
-    console.log(error);
+   
 
-    res.status(500).json({
-      message: "Booking failed",
-    });
-  }
+app.post("/booking",verifyToken, async (req, res) => {
+  const bookingData = req.body;
+  const result = await bookingCollection.insertOne(bookingData);
+  res.json(result)
+
 });
-
     
     app.patch('/rooms/:id',verifyToken, async (req, res) => {
-      const { id } = req.params.id
+      const { id } = req.params
       const updatedData = req.body
       console.log(updatedData);
       const result =await roomsCollection.updateOne(
@@ -312,7 +352,7 @@ async function run() {
   const result = await roomsCollection.insertOne(roomData);
   res.json(result);
 });
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
