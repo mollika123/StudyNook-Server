@@ -1,23 +1,43 @@
-# StudyNook Backend API
+# StudyNook Server 📚✏️
 
-StudyNook is a backend RESTful API built using Node.js, Express, and MongoDB. It manages study room listings, bookings, and user allocations with remote JWKS token verification for authentication.
+Welcome to the backend server for **StudyNook**, a collaborative student platform designed to streamline study groups, resource sharing, and task management. This server acts as the robust RESTful API handling authentication, database management, and real-time communication.
 
 ---
 
 ## 🚀 Features
 
-* **Room Management:** Full CRUD operations for study room listings with advanced filtering capabilities (search, amenities, hourly rates, and floor).
-* **Booking Management:** Allows authenticated users to book rooms and delete existing bookings.
-* **JWT Authentication:** Implements secure route guarding using JSON Web Tokens (JWT) verified against a remote JWKS (JSON Web Key Set) endpoint via `jose-cjs`.
-* **DNS Resolution Fix:** Pre-configured custom DNS servers to bypass potential local MongoDB connection lookup issues.
+* **User Authentication & Authorization:** Secure signup/login using JWT (JSON Web Tokens) and bcrypt password hashing.
+* **Study Group Management:** CRUD operations for creating, joining, and managing study rooms/nooks.
+* **Resource Sharing:** Secure endpoints for uploading and sharing study materials, notes, and links.
+* **Real-time Communication:** WebSockets (Socket.io) integration for instant messaging within study groups.
+* **Task/Quiz Tracking:** APIs to manage student schedules, deadlines, and progress tracking.
+* **Database Integration:** Scalable data modeling using MongoDB (via Mongoose) / PostgreSQL.
 
 ---
 
-## 🛠️ Prerequisites
+## 🛠️ Tech Stack
 
-Before running the server, ensure you have the following installed:
-* [Node.js](https://nodejs.org/) (v16+ recommended)
-* [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account and cluster setup
+* **Runtime Environment:** Node.js
+* **Backend Framework:** Express.js
+* **Database:** MongoDB / PostgreSQL (Specify your DB here)
+* **ORM/ODM:** Mongoose / Prisma
+* **Authentication:** JSON Web Tokens (JWT)
+* **Real-time:** Socket.io
 
 ---
 
+## 📋 Prerequisites
+
+Before running this project, ensure you have the following installed:
+* [Node.js](https://nodejs.org/) (v16.x or higher recommended)
+* [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+* [MongoDB](https://www.mongodb.com/) (Local or Atlas instance)
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/your-username/studynook-server.git](https://github.com/your-username/studynook-server.git)
+cd studynook-server
